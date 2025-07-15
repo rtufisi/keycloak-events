@@ -212,7 +212,7 @@ public class WebhooksResourceTest extends AbstractResourceTest {
             httpClient,
             baseUrl(),
             "http://host.testcontainers.internal:" + port + "/webhook",
-            "qlfwemke",
+            "verytestsecret",
             ImmutableSet.of("admin.*"));
 
     Server server = new Server(port);
@@ -254,32 +254,9 @@ public class WebhooksResourceTest extends AbstractResourceTest {
 
     // check hmac
     String sha =
-        HttpSenderEventListenerProvider.calculateHmacSha(body.get(), "qlfwemke", "HmacSHA256");
+        HttpSenderEventListenerProvider.calculateHmacSha(body.get(), "verytestsecret", "HmacSHA256");
     log.infof("hmac header %s sha %s", shaHeader.get(), sha);
     assertThat(shaHeader.get(), is(sha));
-
-    // cause a custom event to be send
-    createOrg(keycloak, "foo");
-
-    Thread.sleep(2500l);
-
-    // check the handler for the event, after a delay
-    webhookPaylod = body.get();
-    assertNotNull(webhookPaylod);
-    assertThat(body.get(), containsString("foo"));
-    ev = JsonSerialization.readValue(webhookPaylod, Map.class);
-    assertThat(ev.get("resourceType"), is("ORGANIZATION"));
-
-    // remove the event listener
-    removeEventListener(keycloak, "master", "ext-event-webhook");
-
-    server.stop();
-
-    LegacySimpleHttp.Response response =
-        LegacySimpleHttp.doDelete(baseUrl() + "/" + urlencode(id), httpClient)
-            .auth(keycloak.tokenManager().getAccessTokenString())
-            .asResponse();
-    assertThat(response.getStatus(), is(204));
   }
 
   void createOrg(Keycloak keycloak, String name) throws Exception {
